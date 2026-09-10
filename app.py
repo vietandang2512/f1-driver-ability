@@ -20,6 +20,119 @@ DATA = Path(__file__).resolve().parent / "data" / "processed"
 
 st.set_page_config(page_title="F1 True Driver Ability Measure", layout="wide")
 
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Titillium+Web:ital,wght@0,400;0,600;0,700;1,700&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Titillium Web', sans-serif;
+    }
+
+    .stApp {
+        background: linear-gradient(180deg, #0A0A0A 0%, #15151E 100%);
+    }
+
+    /* Racing-stripe banner across the very top of the page */
+    .f1-stripe-banner {
+        background: repeating-linear-gradient(
+            135deg,
+            #E10600 0px, #E10600 40px,
+            #000000 40px, #000000 80px
+        );
+        height: 6px;
+        width: 100%;
+        margin: -1rem 0 1.25rem 0;
+        border-radius: 0 0 3px 3px;
+    }
+
+    /* Checkered-flag divider, used between major sections */
+    .f1-checkered {
+        height: 14px;
+        width: 100%;
+        background-image:
+            linear-gradient(45deg, #fff 25%, transparent 25%),
+            linear-gradient(-45deg, #fff 25%, transparent 25%),
+            linear-gradient(45deg, transparent 75%, #fff 75%),
+            linear-gradient(-45deg, transparent 75%, #fff 75%);
+        background-size: 18px 18px;
+        background-position: 0 0, 0 9px, 9px -9px, -9px 0px;
+        background-color: #000;
+        margin: 1.75rem 0;
+        border-radius: 2px;
+        opacity: 0.9;
+    }
+
+    h1 {
+        font-weight: 700 !important;
+        font-style: italic;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #FFFFFF !important;
+        border-left: 6px solid #E10600;
+        padding-left: 14px;
+    }
+
+    h2, h3 {
+        color: #FFFFFF !important;
+        font-weight: 600 !important;
+        border-bottom: 2px solid #E10600;
+        padding-bottom: 4px;
+        display: inline-block;
+    }
+
+    hr {
+        border-color: #E10600 !important;
+        opacity: 0.35;
+    }
+
+    /* Metric cards */
+    [data-testid="stMetric"] {
+        background-color: #16161F;
+        border: 1px solid #2A2A2A;
+        border-left: 4px solid #E10600;
+        border-radius: 6px;
+        padding: 1rem;
+    }
+    [data-testid="stMetricLabel"] {
+        color: #B8B8B8 !important;
+    }
+    [data-testid="stMetricValue"] {
+        color: #FFFFFF !important;
+    }
+
+    /* Tabs, styled like pit-wall timing screens */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 8px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        background-color: #16161F;
+        color: #B8B8B8;
+        border-radius: 4px 4px 0 0;
+        border: 1px solid #2A2A2A;
+        border-bottom: none;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: #E10600 !important;
+        color: #FFFFFF !important;
+    }
+
+    /* Dataframes and select widgets */
+    [data-testid="stDataFrame"] {
+        border: 1px solid #2A2A2A;
+        border-radius: 6px;
+    }
+
+    [data-testid="stCaptionContainer"] {
+        color: #9A9A9A !important;
+    }
+    </style>
+
+    <div class="f1-stripe-banner"></div>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 @st.cache_data
 def load_master():
@@ -55,6 +168,8 @@ st.caption(
     "Who's actually the best driver on the grid, once you control for who has the best car? "
     "Ridge regression and chained ELO, applied to every teammate pairing from 2014 to now."
 )
+
+st.markdown('<div class="f1-checkered"></div>', unsafe_allow_html=True)
 
 master = load_master()
 
@@ -102,6 +217,8 @@ st.caption(
     "ELO: higher rating is better. Ridge: negative ms means faster than average, "
     "so a more negative number is better."
 )
+
+st.markdown('<div class="f1-checkered"></div>', unsafe_allow_html=True)
 
 st.header("Accuracy testing")
 st.caption(
