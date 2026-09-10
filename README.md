@@ -158,6 +158,4 @@ Qualifying gap data needed reconstruction, since F1DB's own precomputed qualifyi
 
 DNFs needed a real decision rather than a placeholder. An early idea was to treat a retirement as "lost by 10 seconds" so those races wouldn't have to be thrown out. That got dropped: a flat penalty can't tell a mechanical failure from a driving error, and the exact number would have been an unjustified constant quietly shaping every result. Races where either teammate retired or was lapped are excluded from the race-pace data instead.
 
-The accuracy tests came later than everything else here. The first version of this project produced all four rankings (race ELO, qualifying ELO, race ridge, qualifying ridge) with no way to check whether any of the numbers actually meant anything. Verstappen landing first in every single ranking looked convincing, but that alone doesn't prove the models were measuring real skill rather than noise or an artifact of the data. It took building elo_calibration.py and holdout_test.py afterward to get an actual answer: does this rating or coefficient predict anything about races it hasn't seen yet? Before that, the rankings were just numbers that seemed plausible.
-
 [Open an issue](../../issues) if you spot something wrong or want to discuss the methodology.
