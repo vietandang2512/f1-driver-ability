@@ -4,11 +4,14 @@ A data analytics project that tries to separate F1 driver skill from car perform
 
 Who's actually the best driver on the grid, once you control for who has the best car? That's the question this project tries to answer.
 
+Live app: [F1 True Driver Ability Measure](https://f1-driver-ability-ugknhet5rjtkmb79svqpw7.streamlit.app/)
+
 ---
 
 ## Quick Start
 
-- Want just the results? Open `F1_Driver_Rankings_2014_present.xlsx`. The Combined sheet ranks all 63 drivers across all four models, and each model also has its own detail sheet.
+- Want to click around without downloading anything? Open the [live app](https://f1-driver-ability-ugknhet5rjtkmb79svqpw7.streamlit.app/). Sort the rankings, look up a driver, check the accuracy numbers.
+- Want the results as a spreadsheet? Open `F1_Driver_Rankings_2014_present.xlsx`. The Combined sheet ranks all 63 drivers across all four models, and each model also has its own detail sheet.
 - Want to run the pipeline yourself? See Reproducing the analysis below.
 - Want the full write-up? Keep reading.
 
@@ -95,9 +98,19 @@ There's no ground-truth "true skill" number to check either model against. Accur
 
 ---
 
+## Which model is more accurate
+
+Ridge wins the direct comparison. In the holdout test, where both models train on 2014-2022 and get judged on 2023 with no further updates, ridge picked the faster driver 69.9% of the time for race pace and 66.9% for qualifying. Frozen-rating ELO managed 56.3% and 59.5% on that same test. That's a real gap, not noise.
+
+The catch is that freezing ELO's ratings isn't how ELO is meant to run. Its whole design is continuous updating, and the calibration test lets it do that: checked against its own rolling predictions across the full 2014-present history, ELO scores 60.8% and 66.6%, much closer to ridge's holdout numbers. So the honest version of this isn't "ridge is better." Ridge is the stronger choice for a one-time prediction, like ranking a season before it starts. ELO is the stronger choice for a rating that updates continuously and only needs to be right about right now. This project asks a mostly retrospective question, who was actually the better driver over a career, and ridge's holdout performance is the more relevant number for that question. On that number, ridge comes out ahead.
+
+---
+
 ## Data limitations
 
 ELO has no recency weighting. A slump from years ago counts the same as one from last month. This drives the Ricciardo gap above, and it also pulls Hamilton's qualifying ELO rank down to 43rd, well below his 13th-place ridge rank, since a long uneven career average includes both his best years and a rougher recent stretch.
+
+ELO's rating is also only as good as the teammates that define it, and a driver with very few teammates ever is especially exposed to that. Mick Schumacher's race ELO ranks him 12th of 63, well ahead of drivers with far stronger reputations. He only ever had two F1 teammates: Nikita Mazepin in 2021 and Kevin Magnussen in 2022, and both of them rank in the bottom third of the whole grid themselves (50th and 56th). Beating two below-average teammates repeatedly builds a rating that looks strong locally without ever being tested against anyone stronger. ELO also only counts races where both teammates are classified, so a DNF isn't a loss, it just doesn't count at all, and Schumacher had a run of costly crashes in 2022 that disappear from his record entirely under this scoring. Ridge tells a more familiar story: with a stricter data requirement it only finds 7 usable race-pace comparisons for Schumacher instead of ELO's 30, and on that smaller, cleaner sample it ranks him 43rd.
 
 Ridge and ELO answer different questions, whole-career average versus current form, so there's no single number this project can point to as the definitive answer. Small samples produce noisy numbers too: a 3-race substitute stint gets a real coefficient or rating, built on far less evidence than a 200-race career, so check the `n` column before trusting any single rank.
 
