@@ -1,2 +1,6 @@
 streamlit
 pandas
+
+# only needed to reproduce the pipeline in /src (not required to run app.py)
+scikit-learn
+openpyxl

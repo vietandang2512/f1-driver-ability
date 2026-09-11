@@ -1,6 +1,6 @@
 # F1 True Driver Ability Measure
 
-A data analytics project that tries to separate F1 driver skill from car performance, using two independent statistical models cross-checked against each other, across twelve-plus seasons (2014-2026) of race data.
+A data analytics project that tries to separate F1 driver skill from car performance, using two independent statistical models cross-checked against each other, across twelve-plus seasons (2014-present) of race data.
 
 Who's actually the best driver on the grid, once you control for who has the best car? That's the question this project tries to answer.
 
@@ -21,12 +21,12 @@ Live app: [F1 True Driver Ability Measure](https://f1-driver-ability-ugknhet5rjt
 
 ## Scope
 
-- Drivers covered: every F1 driver who raced 2014-2026 (63 total)
+- Drivers covered: every F1 driver who raced 2014-present (63 total)
 - Metrics: race pace and qualifying pace, modeled separately
 - Models: chained ELO (a rolling 1500-centered rating) and pairwise ridge regression (a career-average pace coefficient in milliseconds)
 - Comparison method: teammates only, since that's the one matchup where car quality is held constant
 - Out of scope: absolute car performance, team orders, in-race strategy, lap-level telemetry
-- Time window: 2014-2026, the current turbo-hybrid regulation era, chosen for regulatory consistency and because it's long enough for driver movement between teams to connect the whole grid (see Challenges encountered)
+- Time window: 2014-present, the current turbo-hybrid regulation era, chosen for regulatory consistency and because it's long enough for driver movement between teams to connect the whole grid (see Challenges encountered)
 
 A single-season (2023-only) version was tried first and dropped. See below.
 
@@ -94,7 +94,7 @@ Vettel, Räikkönen, and Perez all land in the bottom half, average rank around 
 
 There's no ground-truth "true skill" number to check either model against. Accuracy here means checking whether each model's predictions hold up against results it hasn't seen. Two tests, both in `/src`.
 
-`elo_calibration.py` checks ELO's own built-in prediction. Chained ELO already produces a probability before every race, something like "driver A has a 65% chance of beating their teammate today," using only ratings built from earlier races. That's a leak-free prediction by design, so the test just checks it against what actually happened, across the full 2014-2026 history. Race pace comes out with a Brier score of 0.227 (0.25 is what an always-50/50 guess would score, so lower is better), and picked the actual winner correctly in 60.8% of 1,912 decisive comparisons. Qualifying pace scores 0.213 and 66.6%. The model's stated confidence holds up too: in races where it predicted a 70-80% chance, the favorite actually won 73.8% of the time.
+`elo_calibration.py` checks ELO's own built-in prediction. Chained ELO already produces a probability before every race, something like "driver A has a 65% chance of beating their teammate today," using only ratings built from earlier races. That's a leak-free prediction by design, so the test just checks it against what actually happened, across the full 2014-present history. Race pace comes out with a Brier score of 0.227 (0.25 is what an always-50/50 guess would score, so lower is better), and picked the actual winner correctly in 60.8% of 1,912 decisive comparisons. Qualifying pace scores 0.213 and 66.6%. The model's stated confidence holds up too: in races where it predicted a 70-80% chance, the favorite actually won 73.8% of the time.
 
 `holdout_test.py` trains on 2014-2022 and tests on 2023, a season neither model saw while fitting. For ridge that means refitting on 2014-2022 data only. For ELO, ratings are frozen at the end of 2022 and not updated during the 2023 test, which is a stricter check than the calibration test above since it removes ELO's ability to keep adapting. Ridge picked the faster driver 69.9% of the time for race pace and 66.9% for qualifying (baseline is 50% either way). Its error on the predicted gap size was 13,374ms for race pace versus a 15,677ms baseline that just guesses zero, a real improvement. For qualifying the gap-size error was 1,549ms versus a 1,594ms baseline, barely better than guessing zero. Ridge is good at picking who's faster in qualifying and weak at saying by how much. ELO with frozen ratings scored 56.3% for race and 59.5% for qualifying, both above baseline but clearly weaker than the 60.8% and 66.6% from the rolling calibration test. Freezing the ratings a year in advance costs real accuracy. ELO's advantage is that it keeps updating, and taking that away makes it perform worse.
 
@@ -104,7 +104,7 @@ There's no ground-truth "true skill" number to check either model against. Accur
 
 Ridge wins the direct comparison. In the holdout test, where both models train on 2014-2022 and get judged on 2023 with no further updates, ridge picked the faster driver 69.9% of the time for race pace and 66.9% for qualifying. Frozen-rating ELO managed 56.3% and 59.5% on that same test. That's a real gap, not noise.
 
-The catch is that freezing ELO's ratings isn't how ELO is meant to run. Its whole design is continuous updating, and the calibration test lets it do that: checked against its own rolling predictions across the full 2014-2026 history, ELO scores 60.8% and 66.6%, much closer to ridge's holdout numbers. So the honest version of this isn't "ridge is better." Ridge is the stronger choice for a one-time prediction, like ranking a season before it starts. ELO is the stronger choice for a rating that updates continuously and only needs to be right about right now. This project asks a mostly retrospective question, who was actually the better driver over a career, and ridge's holdout performance is the more relevant number for that question. On that number, ridge comes out ahead.
+The catch is that freezing ELO's ratings isn't how ELO is meant to run. Its whole design is continuous updating, and the calibration test lets it do that: checked against its own rolling predictions across the full 2014-present history, ELO scores 60.8% and 66.6%, much closer to ridge's holdout numbers. So the honest version of this isn't "ridge is better." Ridge is the stronger choice for a one-time prediction, like ranking a season before it starts. ELO is the stronger choice for a rating that updates continuously and only needs to be right about right now. This project asks a mostly retrospective question, who was actually the better driver over a career, and ridge's holdout performance is the more relevant number for that question. On that number, ridge comes out ahead.
 
 ![Holdout test results table in the live app](docs/images/holdout-results.jpg)
 
@@ -127,7 +127,8 @@ Teammate comparison itself has limits. It can't measure absolute car performance
 ## Reproducing the analysis
 
 1. Download F1DB's CSV release into `data/raw/` (see the [F1DB repo](https://github.com/f1db/f1db) for the current release link).
-2. Run, in order:
+2. `pip install -r requirements.txt` (installs `scikit-learn` and `openpyxl` in addition to what the app itself needs).
+3. Run, in order:
    ```
    python3 src/clean_full_era.py
    python3 src/ridge_model_full_era.py
@@ -136,38 +137,35 @@ Teammate comparison itself has limits. It can't measure absolute car performance
    python3 src/master_rankings.py
    python3 src/build_rankings_workbook.py
    ```
-3. Optionally run the accuracy tests:
+4. Optionally run the accuracy tests:
    ```
    python3 src/elo_calibration.py
    python3 src/holdout_test.py
    ```
-4. Open `F1_Driver_Rankings_2014_present.xlsx` for the results.
+5. Open `F1_Driver_Rankings_2014_present.xlsx` for the results.
 
 ```
 f1-driver-ability/
 ├── data/raw/              F1DB's downloaded CSVs (gitignored, re-download above)
 ├── data/processed/        every intermediate and final table the pipeline produces
 ├── src/
-│   ├── clean.py                       single-season (2023) teammate-gap tables, original MVP
-│   ├── clean_multiseason.py           same, pooled 2014-2023
-│   ├── clean_full_era.py              same, pooled 2014-2026 (final scope)
-│   ├── ridge_model.py                 ridge regression, single season
-│   ├── ridge_model_multiseason.py / ridge_model_full_era.py   same, pooled
-│   ├── elo_model.py                   chained ELO, race pace, 2014-2026
-│   ├── elo_model_quali.py             chained ELO, qualifying pace, 2014-2026
-│   ├── compare_quali_vs_race_elo.py   same model, two metrics
-│   ├── compare_ridge_vs_elo.py        two models, same metric
+│   ├── clean_full_era.py              teammate-gap tables, pooled 2014-present
+│   ├── ridge_model_full_era.py        ridge regression on those tables
+│   ├── elo_model.py                   chained ELO, race pace, 2014-present
+│   ├── elo_model_quali.py             chained ELO, qualifying pace, 2014-present
 │   ├── elo_calibration.py             accuracy test: ELO calibration / Brier score
 │   ├── holdout_test.py                accuracy test: chronological holdout
 │   └── master_rankings.py / build_rankings_workbook.py   combines everything into one spreadsheet
 └── F1_Driver_Rankings_2014_present.xlsx   the results
 ```
 
+Earlier single-season and multi-season-pooled versions of the cleaning and ridge scripts (plus a couple of one-off model-comparison scripts) existed during development but are no longer in the repo — see Challenges encountered below for why the pipeline moved from single-season to full-era in the first place.
+
 ---
 
 ## Challenges encountered
 
-The first version fit ridge on 2023 data only, and it ranked Fernando Alonso almost as high as Max Verstappen. Almost nobody switched teams mid-2023, so the ten team pairs were ten separate, disconnected islands of data. Red Bull's pair had zero data connecting it to Aston Martin's pair. Ridge regression's penalty anchors any isolated pair near zero by default, so Alonso's margin over Lance Stroll and Verstappen's margin over Sergio Perez both landed near zero independently. That made them look comparable by coincidence, not because the data ever actually compared them. The fix was to pool multiple seasons: drivers change teams over the years, and each move links two previously separate team pairs together, turning the isolated islands into one connected graph. That's why the project spans 2014-2026 instead of one season.
+The first version fit ridge on 2023 data only, and it ranked Fernando Alonso almost as high as Max Verstappen. Almost nobody switched teams mid-2023, so the ten team pairs were ten separate, disconnected islands of data. Red Bull's pair had zero data connecting it to Aston Martin's pair. Ridge regression's penalty anchors any isolated pair near zero by default, so Alonso's margin over Lance Stroll and Verstappen's margin over Sergio Perez both landed near zero independently. That made them look comparable by coincidence, not because the data ever actually compared them. The fix was to pool multiple seasons: drivers change teams over the years, and each move links two previously separate team pairs together, turning the isolated islands into one connected graph. That's why the project spans 2014-present instead of one season.
 
 Comparing a sequential model to a joint-fit model also isn't straightforward. ELO updates race by race, so its rating at any point in time is a real snapshot. Ridge solves for all coefficients at once from whatever data it's given, so there's no equivalent snapshot. A fair comparison meant snapshotting ELO's rating at a driver's last race in a given year, while refitting ridge using only data through that year, two different mechanisms to reach the same kind of comparison point.
 
